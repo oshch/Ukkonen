@@ -8,115 +8,116 @@
 #include <algorithm>
 
 
-using namespace std;
-
 class Ukkonen
 {
 private:
     class Node {
     public:
-        int parent, d, suf, lft;
-        vector<int> bor;
+        int parent, suf, d;
+        size_t lft;
+        std::vector<int> bor;
         Node(){}
     };
-    vector<Node> nodes;
-    int next, left, cur, link;
-    char * s;
-    bool leaf;
-    int n;
+    std::vector<Node> nodes_;
+    int next_, left_, link_;
+    size_t cur_;
+    std::string s_;
+    bool leaf_;
+    size_t n_;
 
     void add(int right)
     {
-        leaf = false;
-        if (nodes[cur].d != right - left)
+        leaf_ = false;
+        if (nodes_[cur_].d != right - left_)
         {
-            int len = right - left - nodes[nodes[cur].parent].d;
-            leaf = s[nodes[cur].lft + len] != s[right];
-            if (leaf)
+            size_t len = right - left_ - nodes_[nodes_[cur_].parent].d;
+            leaf_ = s_[nodes_[cur_].lft + len] != s_[right];
+            if (leaf_)
             {
-                int u = create(nodes[cur].parent, nodes[cur].lft, right - left);
-                nodes[cur].parent = u;
-                nodes[cur].lft += len;
-                nodes[u].bor[s[nodes[u].lft + len] - 'a'] = cur;
-                nodes[nodes[u].parent].bor[s[nodes[u].lft] - 'a'] = u;
-                cur = u;
+                size_t u = create(nodes_[cur_].parent, nodes_[cur_].lft, right - left_);
+                nodes_[cur_].parent = u;
+                nodes_[cur_].lft += len;
+                nodes_[u].bor[s_[nodes_[u].lft + len] - 'a'] = cur_;
+                nodes_[nodes_[u].parent].bor[s_[nodes_[u].lft] - 'a'] = u;
+                cur_ = u;
             }
         }
-        if (nodes[cur].d == right - left)
+        if (nodes_[cur_].d == right - left_)
         {
-            leaf = nodes[cur].bor[s[right] - 'a'] == -1;
-            if (leaf)
-                nodes[cur].bor[s[right] - 'a'] = create(cur, right, -1);
-            cur = nodes[cur].bor[s[right] - 'a'];
+            leaf_ = nodes_[cur_].bor[s_[right] - 'a'] == -1;
+            if (leaf_)
+                nodes_[cur_].bor[s_[right] - 'a'] = create(cur_, right, -1);
+            cur_ = nodes_[cur_].bor[s_[right] - 'a'];
         }
     }
 
-    int create(int p, int l, int depth) {
-        nodes[next].parent = p;
-        nodes[next].lft = l;
-        nodes[next].suf = -1;
-        nodes[next].d = depth;
-        nodes[next].bor.assign(27, -1);
-        return next++;
+    int create(int p, size_t l, int depth) {
+        nodes_[next_].parent = p;
+        nodes_[next_].lft = l;
+        nodes_[next_].suf = -1;
+        nodes_[next_].d = depth;
+        nodes_[next_].bor.assign(27, -1);
+        return next_++;
+    }
+
+    void init(std::string& s) {
+        s_ = s;
+        n_ = s.size();
+        nodes_.assign(2 * n_ + 10, Node());
+        next_ = 0;
+        create(0, 0, 0);
+        nodes_[0].suf = 0;
+        left_ = 0;
+        cur_ = 0;
+        link_ = -1;
+    }
+
+    void buildTree(std::string& s)
+    {
+        for (int right = 0; right < n_; right++)
+        {
+            while (left_ <= right)
+            {
+                add(right);
+                if (link_ != -1) {
+                    nodes_[link_].suf = nodes_[cur_].parent;
+                    link_ = -1;
+                }
+                if (!leaf_)
+                    break;
+
+                left_++;
+
+                cur_ = nodes_[cur_].parent;
+                if (nodes_[cur_].suf == -1)
+                {
+                    link_ = cur_;
+                    cur_ = nodes_[cur_].parent;
+                }
+                cur_ = nodes_[cur_].suf;
+                while (nodes_[cur_].d != -1 && nodes_[cur_].d < right - left_)
+                    add(left_ + nodes_[cur_].d);
+            }
+        }
+
     }
 
 public:
-    void build(char* _s, int len) {
-        s = _s;
-        n = len;
-        int m = 2 * n + 10;
-        while (nodes.size() < m) {
-            nodes.push_back(Node());
-        }
-        next = 0;
-        create(0, 0, 0);
-        nodes[0].suf = 0;
-        left = 0;
-        cur = 0;
-        link = -1;
-
-        for (int right = 0; right < n; right++)
-        {
-            while (left <= right)
-            {
-                add(right);
-
-                if (link != -1) {
-                    nodes[link].suf = nodes[cur].parent;
-                    link = -1;
-                }
-                if (!leaf)
-                    break;
-
-                left++;
-
-                cur = nodes[cur].parent;
-                if (nodes[cur].suf == -1)
-                {
-                    link = cur;
-                    cur = nodes[cur].parent;
-                }
-                cur = nodes[cur].suf;
-                while (nodes[cur].d != -1 && nodes[cur].d < right - left)
-                    add(left + nodes[cur].d);
-            }
-        }
+    void build(std::string s) {
+        init(s);
+        buildTree(s);
     }
 
-    Ukkonen(char * s, int len)
-    {
-        build(s, len);
-    }
+    Ukkonen(){}
 
     int substring()
     {
         int result = 0;
-        for (int i = 0; i < next; i++)
-                if (nodes[i].d != - 1)
-                        result += nodes[i].d - nodes[nodes[i].parent].d;
-                else
-                        result += n - nodes[i].lft;
-
+        for (size_t i = 0; i < next_; i++)
+            if (nodes_[i].d != - 1)
+                result += nodes_[i].d - nodes_[nodes_[i].parent].d;
+            else
+                result += n_ - nodes_[i].lft;
         return result;
     }
 
@@ -125,21 +126,21 @@ public:
 
 int main()
 {
-    char* s = new char[8001];
+    std::string s;
     int k, l;
-    scanf("%d%s", &k, s);
-    l = strlen(s);
-    memcpy(s + l, s, l);
-    s[2 * l] = 0;
-    Ukkonen ukkonen(s, 0);
+    std::cin >> k >> s;
+    l = s.size();
+
+    s += s;
+
+    Ukkonen ukkonen;
     for (int i = 0; i < l; i++) {
         char t = s[i + k];
         s[i + k] = 'z' + 1;
-        ukkonen.build(s + i, k + 1);
+        ukkonen.build(s.substr(i, k + 1));
         printf("%d ", ukkonen.substring() - k - 1);
         s[i + k] = t;
     }
-
 
     return 0;
 }
