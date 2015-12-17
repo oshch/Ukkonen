@@ -110,9 +110,9 @@ public:
 
     Ukkonen(){}
 
-    int substring()
+    unsigned int substring()
     {
-        int result = 0;
+        unsigned int result = 0;
         for (size_t i = 0; i < next_; i++)
             if (nodes_[i].d != - 1)
                 result += nodes_[i].d - nodes_[nodes_[i].parent].d;
@@ -127,14 +127,14 @@ public:
 int main()
 {
     std::string s;
-    int k, l;
+    size_t k, l;
     std::cin >> k >> s;
     l = s.size();
 
     s += s;
 
     Ukkonen ukkonen;
-    for (int i = 0; i < l; i++) {
+    for (size_t i = 0; i < l; i++) {
         char t = s[i + k];
         s[i + k] = 'z' + 1;
         ukkonen.build(s.substr(i, k + 1));
